@@ -18,15 +18,23 @@ export class EventHandler<T extends any[] = any[]> {
    * @param {Callback} fn - subscribtion function
    * @returns {UnsubscribeCallback} unsubscribe function
    */
-  public on(fn: Callback<T> = EventHandler.NO_ACTION): UnsubscribeCallback {
+   public on(fn: Callback<T> = EventHandler.NO_ACTION): UnsubscribeCallback {
     this.callbacks.push(fn);
 
-    return () => {
-      const index = this.callbacks.findIndex(fn);
-      if (index) {
-        this.callbacks.splice(index, 1);
-      }
-    };
+    return () => this.off(fn);
+  }
+
+
+  /**
+   * Remove event subscription
+   * @param {Callback} fn - subscribtion function
+   * @returns {UnsubscribeCallback} unsubscribe function
+   */
+   public off(fn: Callback<T> = EventHandler.NO_ACTION): void {
+    const index = this.callbacks.findIndex(fn);
+    if (index) {
+      this.callbacks.splice(index, 1);
+    }
   }
 
   /**

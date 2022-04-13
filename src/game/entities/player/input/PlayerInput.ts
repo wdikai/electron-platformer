@@ -3,6 +3,9 @@ export interface PlayerInput {
     isRightFired: boolean;
     isDashFired: boolean;
     isJumpFired: boolean;
+    isDownFired: boolean;
+    isUseFired: boolean;
+    isHandFired: boolean;
 
     moveIntensive: number;
 }

@@ -6,7 +6,7 @@ export enum KeyCode {
 
   tab = 9,
   caps = 32,
-  shift = 20,
+  shift = 16,
   alt = 18,
   leftAlt = 225,
   control = 17,

@@ -1,16 +1,17 @@
 import { CooldownTimer } from "../../core/Cooldown";
 import { CooldownTimerManager } from "../../core/CooldownManager";
+import { FSM } from "../../core/fsm/FSM";
 import { Animator } from "../../graphics/Animator";
 import { EffectTypes } from "../../input/gamepad/GamePadController";
-import { GamePadsManager } from "../../input/gamepad/GamepadsManager";
 import { Vector2D } from "../../math/Vector2D";
 import { DinamicObject } from "../../phisics/DinamicObject";
 import { PhisicWorld } from "../../phisics/PhisicWorld";
 import { Sound } from "../../Sound";
 import { GamepadPlayerInput } from "./input/GamepadPlayerInput";
-import { KeyboardPlayerInput } from "./input/KeyboardPlayerInput";
 import { PlayerInput } from "./input/PlayerInput";
+import { PlayerInputFacade } from "./input/PlayerInputFacade";
 import { PlayerAnimation } from "./PlayerAnimation";
+import { PlayerFSMFactory, PlayerStateTriggers, PlayerStates } from "./PlayerFSMFactory";
 
 const stayAnimations = [PlayerAnimation.idle, PlayerAnimation.run, PlayerAnimation.wallSlide];
 
@@ -37,6 +38,8 @@ export class PlayerController {
     dashCooldown: CooldownTimer;
 
     playerInput: PlayerInput;
+    previousPlayerInput: PlayerInput;
+    fsm: FSM<PlayerStates, PlayerStateTriggers>;
 
     constructor(animator: Animator<PlayerAnimation>, phisicObject: DinamicObject, jumpSound: Sound) {
         this.animator = animator;
@@ -60,15 +63,13 @@ export class PlayerController {
         this.jumpCooldown = CooldownTimerManager.instance.createTimer(200);
         this.dashCooldown = CooldownTimerManager.instance.createTimer(350);
 
-        this.playerInput = GamePadsManager.instance.gamepads.size
-            ? new GamepadPlayerInput(GamePadsManager.instance.gamepads.get(0))
-            : new KeyboardPlayerInput();
-        GamePadsManager.instance.onConnect.on(controller => this.playerInput = new GamepadPlayerInput(controller));
-        GamePadsManager.instance.onDisconnect.on(() => this.playerInput = new KeyboardPlayerInput());
+        this.playerInput = new PlayerInputFacade();
+        this.fsm = PlayerFSMFactory.make(this);
     }
 
     public update(deltaTime: number): void {
         this.phisicObject.hasGravity = this.dashCooldown.isFinished;
+        this.triggerFSM();
 
         const onFloorCollision = PhisicWorld.instance.manager.checkCollision(
             this.phisicObject,
@@ -83,16 +84,13 @@ export class PlayerController {
             this.numOfJumps = 0;
             this.numOfDashes = 0;
             if (this.playerInput.isRightFired || this.playerInput.isLeftFired) {
-                this.animator.changeAnimation(PlayerAnimation.run);
             } else {
-                this.animator.changeAnimation(PlayerAnimation.idle);
             }
         }
 
 
         if (this.animator.currentKey === PlayerAnimation.dash && this.playerInput instanceof GamepadPlayerInput && this.isWallCollide()) {
             this.playerInput.controller.playEffect(EffectTypes.DualRumble, { duration: 100, startDelay: 0, strongMagnitude: 1.0, weakMagnitude: 1.0 });
-            this.animator.changeAnimation(PlayerAnimation.idle);
         }
 
         if (!onFloorCollision.hasCollision) {
@@ -110,7 +108,6 @@ export class PlayerController {
                     this.doWallJump();
                 }
             } else if (stayAnimations.includes(this.animator.currentKey)) {
-                this.animator.changeAnimation(PlayerAnimation.fall);
             }
         }
 
@@ -123,16 +120,49 @@ export class PlayerController {
         }
 
         if (this.animator.currentKey === PlayerAnimation.jump && this.animator.currentAnimation.finished) {
-            this.animator.changeAnimation(PlayerAnimation.smrslt);
         }
 
         if (this.animator.currentKey === PlayerAnimation.dash && this.dashCooldown.isFinished) {
-            this.animator.changeAnimation(PlayerAnimation.idle);
         }
 
         if (this.animator.currentKey === PlayerAnimation.smrslt && this.animator.currentAnimation.finished) {
-            this.animator.changeAnimation(PlayerAnimation.fall);
         }
+    }
+
+    triggerFSM(): void {
+        const {
+            isLeftFired,
+            isRightFired,
+            isDashFired,
+            isJumpFired,
+            isDownFired,
+            isUseFired,
+            isHandFired,
+            moveIntensive
+        } = this.playerInput;
+
+        if(isDownFired) this.fsm.trigger(PlayerStateTriggers.downPressed);
+        else if(!isDownFired && this.previousPlayerInput?.isDownFired) this.fsm.trigger(PlayerStateTriggers.downReleased);
+
+        if(isLeftFired) this.fsm.trigger(PlayerStateTriggers.leftPressed);
+        else if(!isLeftFired && this.previousPlayerInput?.isLeftFired) this.fsm.trigger(PlayerStateTriggers.leftReleased);
+
+        if(isRightFired) this.fsm.trigger(PlayerStateTriggers.rightPressed);
+        else if(!isRightFired && this.previousPlayerInput?.isRightFired) this.fsm.trigger(PlayerStateTriggers.rightReleased);
+
+        if (isHandFired && !this.previousPlayerInput?.isHandFired) this.fsm.trigger(PlayerStateTriggers.handFired);
+        if (this.animator.currentAnimation.finished) this.fsm.trigger(PlayerStateTriggers.animationFinished);
+
+        this.previousPlayerInput = {
+            isLeftFired,
+            isRightFired,
+            isDashFired,
+            isJumpFired,
+            isDownFired,
+            isUseFired,
+            isHandFired,
+            moveIntensive
+        };
     }
 
     private doMoving(): void {
@@ -156,7 +186,6 @@ export class PlayerController {
         this.phisicObject.velocity.x = this.jumpSpeed * direction;
         this.phisicObject.velocity.y = 0;
         this.dashCooldown.reset();
-        this.animator.changeAnimation(PlayerAnimation.dash);
         this.numOfDashes++;
     }
 
@@ -166,12 +195,10 @@ export class PlayerController {
         this.jumpSound.play();
         this.jumpCooldown.reset();
         this.wallSlidingCooldown.reset();
-        this.animator.changeAnimation(PlayerAnimation.jump);
     }
 
     private doWallSlide(): void {
         this.phisicObject.velocity.y = this.wallSlideSpeed;
-        this.animator.changeAnimation(PlayerAnimation.wallSlide);
         this.numOfJumps = 0;
         this.numOfDashes = 0;
     }
@@ -186,7 +213,6 @@ export class PlayerController {
         this.jumpCooldown.reset();
         this.freezMoovingCooldown.reset();
         this.wallSlidingCooldown.reset();
-        this.animator.changeAnimation(PlayerAnimation.crnrJmp);
     }
 
     private isWallCollide(): boolean {

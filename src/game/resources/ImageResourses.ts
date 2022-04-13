@@ -121,6 +121,7 @@ export const animations = {
             'assets/images/hero/punch-11.png',
             'assets/images/hero/punch-12.png' 
         ],
-        spead: 100
+        spead: 100,
+        repeat: false
     }
 };
