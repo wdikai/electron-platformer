@@ -6,5 +6,13 @@ export enum PlayerAnimation {
   crnrJmp = 'crnrJmp',
   fall = 'fall',
   wallSlide = 'wallSlide',
-  dash = 'dash'
+  dash = 'dash',
+
+
+  slide = 'slide',
+  walk = 'walk',
+  crouch = 'crouch',
+  crouchWalk = 'crouchWalk',
+  slideStand = 'slideStand',
+  punch = 'punch'
 };
