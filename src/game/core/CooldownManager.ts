@@ -23,6 +23,13 @@ export class CooldownTimerManager {
         return cooldowmn;
     }
 
+    public removeTimer(timer: CooldownTimer): void {
+        const index = this.timers.indexOf(timer);
+        if (index) {
+            this.timers.splice(index, 1);
+        }
+    }
+
     public update(deltaTime: number): void {
         this.timers.forEach(timer => timer.update(deltaTime));
     }

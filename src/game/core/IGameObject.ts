@@ -5,4 +5,5 @@ export default interface IGameObject {
   fixedUpdate(): void;
   update(deltaTime: number): void;
   draw(renderer: Renderer): void;
+  destroy(): Promise<void>;
 }

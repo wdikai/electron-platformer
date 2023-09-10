@@ -20,7 +20,9 @@ export default abstract class AbstractScene implements IScene {
   }
 
   async init(): Promise<void> {}
-  async destroy(): Promise<void> {}
+  async destroy(): Promise<void> {
+    await Promise.all(this.gameObjects.map(gameObject => gameObject.destroy()));
+  }
 
   fixedUpdate(): void {
     this.gameObjects.forEach(gameObject => gameObject.fixedUpdate()); 

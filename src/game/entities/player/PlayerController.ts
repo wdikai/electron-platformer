@@ -67,6 +67,14 @@ export class PlayerController {
         this.fsm = PlayerFSMFactory.make(this);
     }
 
+    public dispose(): void {
+        (this.playerInput as PlayerInputFacade).dispose();
+        CooldownTimerManager.instance.removeTimer(this.freezMoovingCooldown);
+        CooldownTimerManager.instance.removeTimer(this.wallSlidingCooldown);
+        CooldownTimerManager.instance.removeTimer(this.jumpCooldown);
+        CooldownTimerManager.instance.removeTimer(this.dashCooldown);
+    }
+
     public update(deltaTime: number): void {
         this.phisicObject.hasGravity = this.dashCooldown.isFinished;
         this.triggerFSM();
@@ -129,7 +137,7 @@ export class PlayerController {
         }
     }
 
-    triggerFSM(): void {
+    private triggerFSM(): void {
         const {
             isLeftFired,
             isRightFired,
@@ -140,6 +148,11 @@ export class PlayerController {
             isHandFired,
             moveIntensive
         } = this.playerInput;
+
+        const onFloorCollision = PhisicWorld.instance.manager.checkCollision(
+            this.phisicObject,
+            Vector2D.unitY
+        );
 
         if(isDownFired) this.fsm.trigger(PlayerStateTriggers.downPressed);
         else if(!isDownFired && this.previousPlayerInput?.isDownFired) this.fsm.trigger(PlayerStateTriggers.downReleased);
@@ -152,6 +165,10 @@ export class PlayerController {
 
         if (isHandFired && !this.previousPlayerInput?.isHandFired) this.fsm.trigger(PlayerStateTriggers.handFired);
         if (this.animator.currentAnimation.finished) this.fsm.trigger(PlayerStateTriggers.animationFinished);
+
+        if (isJumpFired) this.fsm.trigger(PlayerStateTriggers.jumpPressed);
+
+        if(onFloorCollision.hasCollision) this.fsm.trigger(PlayerStateTriggers.onGround);
 
         this.previousPlayerInput = {
             isLeftFired,

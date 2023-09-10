@@ -6,4 +6,5 @@ export abstract class AbstractGameObject implements IGameObject {
   fixedUpdate(): void {}
   update(deltaTime: number): void {}
   draw(renderer: Renderer): void {}
+  async destroy(): Promise<void> {}
 }

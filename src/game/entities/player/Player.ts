@@ -32,13 +32,18 @@ export class Player extends AbstractGameObject {
 
   draw(renderer: Renderer): void {
     const clipWidth = this.animator.currentAnimation.clip.width * renderer.camera.scale;
+    const clipHeight = this.animator.currentAnimation.clip.width * renderer.camera.scale;
     const x = this.phisicObject.rectangle.position.x - (clipWidth - this.phisicObject.rectangle.w) / 2;
-    const y = this.phisicObject.rectangle.position.y - 20;
+    const y = this.phisicObject.rectangle.position.y - (clipHeight - this.phisicObject.rectangle.h) + 42;
     renderer.renderTexture(
       this.animator.currentAnimation.clip,
       x,
       y,
       this.controller.invertHorizontaly
     );
+  }
+
+  async destroy(): Promise<void> {
+
   }
 }

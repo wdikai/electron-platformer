@@ -2,7 +2,7 @@ import { GamepadButtonCodes } from "../../../input/gamepad/GamepadButtonCodes";
 import { GamePadController } from "../../../input/gamepad/GamePadController";
 import { PlayerInput } from "./PlayerInput";
 
-const STICK_INTENSITY = 0.25;
+const STICK_INTENSITY = 0.15;
 
 export class GamepadPlayerInput implements PlayerInput {
     controller: GamePadController;
@@ -28,7 +28,9 @@ export class GamepadPlayerInput implements PlayerInput {
     }
 
     get moveIntensive(): number {
-        return Math.abs(this.controller.leftStickX) || 1;
+        return !this.isDownFired
+            ? Math.abs(this.controller.leftStickX) || 1
+            : 0.2;
     }
 
     get isDownFired(): boolean {

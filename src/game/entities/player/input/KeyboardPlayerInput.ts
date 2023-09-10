@@ -32,8 +32,8 @@ export class KeyboardPlayerInput implements PlayerInput {
     }
 
     get moveIntensive() : number {
-        return Keyboard.instance.isPressed(KeyCode.shift)
-            ? 1
-            : 0.25;
+        return Keyboard.instance.isPressed(KeyCode.shift) || this.isDownFired
+            ? 0.2
+            : 1;
     }
 }
