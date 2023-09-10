@@ -12,7 +12,7 @@ export class RectangleUtils {
         );
     }
 
-    static intersectWithOffset(first: Rectangle, second: Rectangle, offset: Vector2D): boolean {
+    static intersectWithRectandleWithOffset(first: Rectangle, second: Rectangle, offset: Vector2D): boolean {
         return (
             first !== second &&
             first.left + offset.x < second.right &&

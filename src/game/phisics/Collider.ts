@@ -10,6 +10,6 @@ export class Collider {
     }
 
     intersectWith(object: Collider, offset: Vector2D = Vector2D.zero): boolean {
-        return RectangleUtils.intersectWithOffset(this.rectangle, object.rectangle, offset);
+        return RectangleUtils.intersectWithRectandleWithOffset(this.rectangle, object.rectangle, offset);
     }
 }

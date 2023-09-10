@@ -17,7 +17,7 @@ export default class LevelScene extends AbstractScene {
         await this.player.init();
         level.colliders.forEach(collider => PhisicWorld.instance.addCollider(collider));
         PhisicWorld.instance.addDinamicObject(playerCollider);
-        this.addObject(level);
+        // this.addObject(level);
         this.addObject(this.player);
     }
 
@@ -38,6 +38,7 @@ export default class LevelScene extends AbstractScene {
     }
 
     public async destroy(): Promise<void> {
+        await super.destroy();
         this.gameObjects = [];
         PhisicWorld.instance.reset();
     }

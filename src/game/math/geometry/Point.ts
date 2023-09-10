@@ -20,4 +20,8 @@ export default class Point {
     public toVector(): Vector2D {
         return new Vector2D(this.x, this.y);
     }
+
+    public equalTo(point: Point): boolean {
+        return this === point || (this.x === point.x && this.y === point.y);
+    }
 }
